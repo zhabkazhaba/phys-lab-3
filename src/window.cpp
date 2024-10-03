@@ -49,7 +49,7 @@ int Window::runWindow() {
         return 1;
 
     // Creating a GLFW window
-    GLFWwindow *window = glfwCreateWindow(1140, 550, "PHYS-LAB-2", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(1140, 550, "PHYS-LAB-3", nullptr, nullptr);
     if (!window) {
         glfwTerminate();
         return 1;
@@ -196,7 +196,7 @@ int Window::runWindow() {
                     if (std::get<0>(t.tmp_tuple2) == -1)
                         sendMessage("Error: No measurements to delete", ERR);
                     else
-                        sendMessage("Last measurement is deleted, t = " + std::to_string(t.tmp_pair2.first), SUCCESS);
+                        sendMessage("Last measurement is deleted,\n t = " + std::to_string(std::get<0>(t.tmp_tuple2)), SUCCESS);
                 }
                 if (ImGui::Button("Clear all measurements")) {
                     t.tmp_del_count = exp1.clearMeasurements();
@@ -212,11 +212,11 @@ int Window::runWindow() {
                         if (std::get<0>(t.tmp_tuple2) == -1)
                             sendMessage("Error: Index out of range", ERR);
                         else
-                            sendMessage("Measurements is deleted", SUCCESS);
+                            sendMessage("Measurements are deleted", SUCCESS);
                     }
                 }
                 ImGui::SeparatorText("Last deleted value");
-                ImGui::Text("Value: %f", t.tmp_pair2.second);
+                ImGui::Text("Value: %d", std::get<0>(t.tmp_tuple2));
                 ImGui::EndTabItem();
             }
             if (ImGui::BeginTabItem("Settings")) {
