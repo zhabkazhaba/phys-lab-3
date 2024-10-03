@@ -1,0 +1,13 @@
+{
+  "messages": [
+    {
+      "id": "msg_welcome",
+      "en": "Welcome!",
+      "ru": "Добро пожаловать!"
+    },
+    {
+      "id": "msg2",
+      "en": "Hello, Universe!"
+    }
+  ]
+}
