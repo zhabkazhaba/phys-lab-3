@@ -9,6 +9,7 @@
 #include <string>
 #include "utilityFuncs.hpp"
 #include "textManager.h"
+#include "experimentList.hpp"
 
 
 class Window {
@@ -36,7 +37,7 @@ private:
         float tmp2;
         float tmp3;
         float tmp4;
-        float tmp5;
+        int tmp_int;
         float tmp_conv1;
         float tmp_conv2;
         float tmp_conv3;
@@ -44,11 +45,14 @@ private:
         float tmp_conv5;
         float tmp_conv6;
         int tmp_del;
+        int tmp_del_count;
         int dec_places;
         bool auto_upd;
         std::pair<int, float> tmp_pair1;
         std::pair<int, float> tmp_pair2;
         std::pair<int, double> tmp_pair3;
+        experimentList::measureTuple tmp_tuple1;
+        experimentList::measureTuple tmp_tuple2;
     } t;
     struct {
         std::string message;
