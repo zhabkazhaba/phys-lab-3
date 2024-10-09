@@ -1,6 +1,7 @@
-#ifndef PHYS_LAB_1_WINDOW_H
-#define PHYS_LAB_1_WINDOW_H
-#include "imgui.h"
+#ifndef PHYS_LAB_3_WINDOW_H
+#define PHYS_LAB_3_WINDOW_H
+#include <imgui.h>
+#include "../lib/implot/implot.h"
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include "GLFW/glfw3.h"
@@ -67,4 +68,4 @@ public:
 };
 
 
-#endif //PHYS_LAB_1_WINDOW_H
+#endif //PHYS_LAB_3_WINDOW_H

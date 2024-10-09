@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.26)
-project(phys-lab-2)
+project(phys-lab-3)
 
 include(FetchContent)
 
@@ -21,6 +21,14 @@ FetchContent_Declare(
         GIT_TAG        v1.90.4
 )
 FetchContent_GetProperties(imgui)
+
+# Fetch ImPlot
+FetchContent_Declare(
+        implot
+        GIT_REPOSITORY https://github.com/epezent/implot.git
+        GIT_TAG        v0.16
+)
+FetchContent_MakeAvailable(implot)
 
 if(NOT imgui_POPULATED)
     FetchContent_Populate(imgui)
@@ -44,5 +52,17 @@ target_sources(imgui INTERFACE
         ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
 )
 add_subdirectory(lib)
-add_executable(phys-lab-1 src/main.cpp src/window.h src/window.cpp src/utilityFuncs.hpp src/measureList.h src/measureList.cpp src/textManager.h src/textManager.cpp)
-target_link_libraries(phys-lab-1 PUBLIC nlohmann_json::nlohmann_json imgui OpenGL::GL glfw)
+add_executable(phys-lab-3
+        src/main.cpp
+        src/window.h
+        src/window.cpp
+        src/utilityFuncs.hpp
+        src/measureList.h
+        src/measureList.cpp
+        src/textManager.h
+        src/textManager.cpp
+        lib/implot/implot.h
+        lib/implot/implot.cpp
+        lib/implot/implot_internal.h
+        lib/implot/implot_items.cpp)
+target_link_libraries(phys-lab-3 PUBLIC nlohmann_json::nlohmann_json imgui OpenGL::GL glfw)

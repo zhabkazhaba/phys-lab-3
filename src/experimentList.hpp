@@ -8,6 +8,8 @@ const long KELVINS = 273;
 
 const double S = 0.0000112;
 
+const double B_CONSTANT = 2.897771955e-3;
+
 class experimentList {
  public:
     using measureTuple = std::tuple<long, double, double, long>;
@@ -20,6 +22,7 @@ class experimentList {
     ~experimentList() = default;
     void addMeasurement(measureTuple m) {
         std::get<3>(m) = std::get<0>(m) + KELVINS;
+        std::get<2>(m) = std::get<1>(m) / (6 / 0.9);
         measure_list.push_back(m);
         result_list.push_back(-1);
     }
@@ -81,6 +84,52 @@ class experimentList {
         measure_list.clear();
         result_list.clear();
         return tmp;
+    }
+
+    std::vector<double> getLambdaMaxList() {
+        std::vector<double> lambda_max;
+        for (const auto& measurement : measure_list) {
+            long T = std::get<3>(measurement);
+            if (T > 0) {
+                lambda_max.push_back(B_CONSTANT / static_cast<double>(T));
+            } else {
+                lambda_max.push_back(0.0);
+            }
+        }
+        return lambda_max;
+    }
+
+    std::vector<double> getTemperatureList() const {
+        std::vector<double> temperatures;
+        for (const auto& measurement : measure_list) {
+            temperatures.push_back(static_cast<double>(std::get<3>(measurement)));
+        }
+        return temperatures;
+    }
+
+    std::vector<double> generateTheoreticalLambdaMax(double T_min, double T_max, std::size_t num_points = 100) const {
+        std::vector<double> theoretical_temperatures;
+        std::vector<double> theoretical_lambda_max;
+        double step = (T_max - T_min) / static_cast<double>(num_points - 1);
+        for (std::size_t i = 0; i < num_points; ++i) {
+            double T = T_min + step * i;
+            theoretical_temperatures.push_back(T);
+            if (T > 0)
+                theoretical_lambda_max.push_back(B_CONSTANT / T);
+            else
+                theoretical_lambda_max.push_back(0.0);
+        }
+        return theoretical_lambda_max;
+    }
+
+    std::vector<double> getTheoreticalTemperatureList(double T_min, double T_max, std::size_t num_points = 100) const {
+        std::vector<double> theoretical_temperatures;
+        double step = (T_max - T_min) / static_cast<double>(num_points - 1);
+        for (std::size_t i = 0; i < num_points; ++i) {
+            double T = T_min + step * i;
+            theoretical_temperatures.push_back(T);
+        }
+        return theoretical_temperatures;
     }
 };
 

@@ -59,6 +59,7 @@ int Window::runWindow() {
     // Initializing ImGui
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    ImPlot::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
     io.Fonts->AddFontFromFileTTF("../resources/font/Anonymous_Pro.ttf", 15.0f);
     io.Fonts->GetGlyphRangesCyrillic();
@@ -153,9 +154,8 @@ int Window::runWindow() {
                 ImGui::SeparatorText("Measurements");
                 ImGui::InputInt("Enter t: ", &t.tmp_int);
                 ImGui::InputFloat("Enter U: ", &t.tmp2);
-                ImGui::InputFloat("Enter W: ", &t.tmp3);
                 if (ImGui::Button("Add to list ##2")) {
-                    exp1.addMeasurement(std::make_tuple(t.tmp_int, t.tmp2, t.tmp3, -1));
+                    exp1.addMeasurement(std::make_tuple(t.tmp_int, t.tmp2, -1, -1));
                     if (t.auto_upd)
                         // measureList1.calculateByIndex(measureList1.getSize() - 1);
                     sendMessage("Measurements are added", SUCCESS);
@@ -267,10 +267,104 @@ int Window::runWindow() {
                 }
                 ImGui::EndTabItem();
             }
+
+            if (ImGui::BeginTabItem("Wien's Law")) {
+                std::vector<double> temperatures = exp1.getTemperatureList();
+                std::vector<double> lambda_max = exp1.getLambdaMaxList();
+
+                // Генерация теоретических данных
+                double T_min = 250.0;
+                double T_max = 1100.0;
+                std::size_t num_points = 1000;
+                std::vector<double> theoretical_temperatures = exp1.getTheoreticalTemperatureList(T_min, T_max, num_points);
+                std::vector<double> theoretical_lambda_max = exp1.generateTheoreticalLambdaMax(T_min, T_max, num_points);
+
+                if (ImPlot::BeginPlot("Wien's Law", "Temperature (K)", "Wavelength max (m)",
+                                      ImVec2(-1, -1))) {
+                    ImPlot::SetupLegend(ImPlotLocation_NorthEast);
+
+                    ImPlot::SetupAxesLimits(T_min, T_max,
+                                            *std::min_element(theoretical_lambda_max.begin(), theoretical_lambda_max.end()) * 0.95,
+                                            *std::max_element(theoretical_lambda_max.begin(), theoretical_lambda_max.end()) * 1.05,
+                                            ImGuiCond_Always);
+
+                    ImPlot::PushStyleColor(ImPlotCol_Line, IM_COL32(255, 0, 0, 255));
+                    ImPlot::PlotLine("Theoretical lambda_max = b / T", theoretical_temperatures.data(), theoretical_lambda_max.data(), theoretical_temperatures.size());
+                    ImPlot::PopStyleColor();
+
+                    ImPlot::PushStyleColor(ImPlotCol_MarkerOutline, IM_COL32(0, 255, 0, 255));
+                    ImPlot::PlotScatter("Experimental Data", temperatures.data(), lambda_max.data(), temperatures.size());
+                    ImPlot::PopStyleColor();
+
+                    double horizontal_lambda = 10e-6;
+                    double x_vals[2] = {T_min, T_max};
+                    double y_vals[2] = {horizontal_lambda, horizontal_lambda};
+
+                    ImPlot::PushStyleColor(ImPlotCol_Line, IM_COL32(0, 0, 255, 255));
+                    ImPlot::PlotLine("lambda = 10mkm", x_vals, y_vals, 2);
+                    ImPlot::PopStyleColor();
+
+                    double T1 = 0.9 * T_max;
+                    double T2 = 1.1 * T_min;
+
+                    auto it1 = std::lower_bound(theoretical_temperatures.begin(), theoretical_temperatures.end(), T1);
+                    size_t index1 = std::distance(theoretical_temperatures.begin(), it1);
+                    if (index1 >= theoretical_temperatures.size()) index1 = theoretical_temperatures.size() - 1;
+
+                    auto it2 = std::lower_bound(theoretical_temperatures.begin(), theoretical_temperatures.end(), T2);
+                    size_t index2 = std::distance(theoretical_temperatures.begin(), it2);
+                    if (index2 >= theoretical_temperatures.size()) index2 = theoretical_temperatures.size() - 1;
+
+                    double lambda1 = theoretical_lambda_max[index1];
+                    double lambda2 = theoretical_lambda_max[index2];
+
+                    double dT = theoretical_temperatures[1] - theoretical_temperatures[0];
+                    double slope1 = 0.0;
+                    double slope2 = 0.0;
+
+                    if (index1 > 0 && index1 < theoretical_temperatures.size() - 1) {
+                        slope1 = (theoretical_lambda_max[index1 + 1] - theoretical_lambda_max[index1 - 1]) / (2 * dT);
+                    } else if (index1 == 0) {
+                        slope1 = (theoretical_lambda_max[index1 + 1] - theoretical_lambda_max[index1]) / dT;
+                    } else {
+                        slope1 = (theoretical_lambda_max[index1] - theoretical_lambda_max[index1 - 1]) / dT;
+                    }
+
+                    if (index2 > 0 && index2 < theoretical_temperatures.size() - 1) {
+                        slope2 = (theoretical_lambda_max[index2 + 1] - theoretical_lambda_max[index2 - 1]) / (2 * dT);
+                    } else if (index2 == 0) {
+                        slope2 = (theoretical_lambda_max[index2 + 1] - theoretical_lambda_max[index2]) / dT;
+                    } else {
+                        slope2 = (theoretical_lambda_max[index2] - theoretical_lambda_max[index2 - 1]) / dT;
+                    }
+
+                    double T_plot_min = T_min;
+                    double T_plot_max = T_max;
+
+                    double tangent1_x[2] = {T_plot_min, T_plot_max};
+                    double tangent1_y[2] = {lambda1 + slope1 * (T_plot_min - T1), lambda1 + slope1 * (T_plot_max - T1)};
+
+                    double tangent2_x[2] = {T_plot_min, T_plot_max};
+                    double tangent2_y[2] = {lambda2 + slope2 * (T_plot_min - T2), lambda2 + slope2 * (T_plot_max - T2)};
+
+                    ImPlot::PushStyleColor(ImPlotCol_Line, IM_COL32(255, 165, 0, 255));
+                    ImPlot::PlotLine("Tangent at 0.9Tmax", tangent1_x, tangent1_y, 2);
+                    ImPlot::PopStyleColor();
+
+                    ImPlot::PushStyleColor(ImPlotCol_Line, IM_COL32(128, 0, 128, 255));
+                    ImPlot::PlotLine("Tangent at 1.1Tmin", tangent2_x, tangent2_y, 2);
+                    ImPlot::PopStyleColor();
+
+                    ImPlot::EndPlot();
+                }
+
+                ImGui::EndTabItem();
+            }
+
             if (ImGui::BeginTabItem("Other")) {
                 ImGui::SeparatorText("U");
                 ImGui::Text("Average U: %.*f", t.dec_places, exp1.getAvFromTuple(1));
-                ImGui::SeparatorText("Y");
+                ImGui::SeparatorText("W");
                 ImGui::Text("Average W: %.*f", t.dec_places, exp1.getAvFromTuple(2));
                 ImGui::EndTabItem();
             }
@@ -335,6 +429,7 @@ int Window::runWindow() {
     // Cleanup
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
+    ImPlot::DestroyContext();
     ImGui::DestroyContext();
 
     glfwDestroyWindow(window);
